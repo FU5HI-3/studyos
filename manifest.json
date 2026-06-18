@@ -2,8 +2,8 @@
   "name": "StudyOS",
   "short_name": "StudyOS",
   "description": "大学生向け課題・タスク管理アプリ",
-  "start_url": "/StudyOS/",
-  "scope": "/StudyOS/",
+  "start_url": "/studyos/",
+  "scope": "/studyos/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0f1117",
@@ -28,7 +28,7 @@
       "name": "タスクを追加",
       "short_name": "タスク追加",
       "description": "新しいタスクをすぐに追加",
-      "url": "/StudyOS/"
+      "url": "/studyos/"
     }
   ]
 }
