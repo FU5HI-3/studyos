@@ -2643,7 +2643,7 @@ ${'='.repeat(36)}
 
 ■ 科目別実績
 ${Object.entries(subjectMap).map(([s,d])=>
-  `  ${s}: ${d.done}タスク完了${d.time>0?` / 実績${d.time}分`:`}`
+  `  ${s}: ${d.done}タスク完了${d.time>0?' / 実績'+d.time+'分':''}`
 ).join('\n')||'  （データなし）'}
 
 ■ 完了した課題
