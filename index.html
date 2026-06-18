@@ -1909,6 +1909,8 @@ function carryOverTasks(){
   saveS();renderAll();
   showToast('📅 今日に繰り越しました','ok',2000);
 }
+
+function celebrate(idx){
   // チェックボタンにアニメーション
   const items=document.querySelectorAll('.check-btn');
   if(items[idx]){
