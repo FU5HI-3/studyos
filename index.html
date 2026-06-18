@@ -452,6 +452,31 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 .notif-banner .nb-close{background:none;border:none;color:var(--text-sub);cursor:pointer;font-size:18px;padding:2px}
 
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* 今日のセル — 光彩パルス */
+.cal-day.today{
+  background:var(--accent2)!important;
+  color:white!important;font-weight:800!important;
+  box-shadow:0 0 0 2px var(--accent2),0 0 14px rgba(108,99,255,.5)!important;
+  animation:todayPulse 3s ease-in-out infinite;
+}
+@keyframes todayPulse{
+  0%,100%{box-shadow:0 0 0 2px var(--accent2),0 0 10px rgba(108,99,255,.35);}
+  50%{box-shadow:0 0 0 2px var(--accent2),0 0 22px rgba(108,99,255,.65);}
+}
+
+/* タスクふわっとアニメーション */
+@keyframes taskFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.task-anim{animation:taskFadeIn .22s ease;}
+
+/* 情報強弱 — 高優先タスク */
+.task-name.prio-high{font-weight:700;color:var(--text);}
+.task-item .task-name.prio-high::before{content:'🔴 ';font-size:11px;}
+/* 締切近いタスク */
+.task-info.deadline-near{color:var(--danger)!important;font-weight:600;}
+/* 完了タスクは薄く */
+.task-item:has(.check-btn.done){opacity:.65;}
+
 </style>
 </head>
 <body>
@@ -1265,9 +1290,12 @@ function taskItemHTML(t,idx){
   const nextBtn=(!t.done&&t.repeat&&t.repeat!=='none')
     ?`<button onclick="spawnNextTask(${idx})" class="task-edit" title="完了せず次回分を生成" style="font-size:11px;color:var(--safe);white-space:nowrap">次▶</button>`
     :'';
-  // 名前の強弱：優先度・締切近さで色変え
-  let nameStyle='';
-  if(t.done)nameStyle='color:var(--text-sub)';
+  // 名前の強弱：優先度で色・太さ変え
+  const prioClass = t.priority==='high'&&!t.done ? 'prio-high' : '';
+  // 締切近いタスク（関連課題が48時間以内）
+  const relAssign = S.assignments.find(a=>!a.done&&a.subject&&t.subject&&a.subject===t.subject);
+  const isNearDeadline = relAssign && getCD(relAssign.date,relAssign.time).hours < 48;
+  const infoClass = isNearDeadline&&!t.done ? 'deadline-near' : '';
   return `
   <div class="task-item task-anim" data-idx="${idx}" draggable="true"
     ondragstart="onDragStart(event,${idx})"
@@ -1280,8 +1308,8 @@ function taskItemHTML(t,idx){
     <div class="drag-handle">⠿</div>
     <button class="check-btn${t.done?' done':''}" onclick="toggleTask(${idx})">${t.done?'✓':''}</button>
     <div class="task-body" onclick="openEditModal(${idx})" style="cursor:pointer">
-      <div class="task-name${t.done?' done':''}" style="${nameStyle}">${esc(t.name)}</div>
-      <div class="task-info">${info}${actual} ${tb}${rb}${t.quickAdded&&!t.done?'<span style="font-size:10px;color:var(--accent);margin-left:4px">✏️</span>':''}</div>
+      <div class="task-name${t.done?' done':''} ${prioClass}">${esc(t.name)}</div>
+      <div class="task-info ${infoClass}">${info}${actual} ${tb}${rb}${t.quickAdded&&!t.done?'<span style="font-size:10px;color:var(--accent);margin-left:4px">✏️</span>':''}</div>
     </div>
     ${nextBtn}
     <button onclick="startPomo(${idx})" class="task-edit">🍅</button>
