@@ -2441,33 +2441,35 @@ function deleteAssign(idx){
 //  セルフヒーリング（データ整合性チェック）
 // ===========================
 function selfHeal(){
-  let fixed = 0;
-  // tasks の修復
-  S.tasks = S.tasks.filter(t => {
-    if(!t || typeof t !== 'object') return false;
-    if(!t.name || typeof t.name !== 'string') return false;
-    return true;
-  }).map(t => {
-    if(!t.type) { t.type='rough'; fixed++; }
-    if(!t.date || !/^\d{4}-\d{2}-\d{2}$/.test(t.date)) { t.date=fmtDate(new Date()); fixed++; }
-    if(typeof t.done !== 'boolean') { t.done=false; fixed++; }
-    if(!t.repeat) { t.repeat='none'; fixed++; }
+  // 必須プロパティの初期化
+  if(!S.tasks||!Array.isArray(S.tasks))S.tasks=[];
+  if(!S.assignments||!Array.isArray(S.assignments))S.assignments=[];
+  if(!S.subjects||!Array.isArray(S.subjects))S.subjects=[];
+  if(!S.activity||typeof S.activity!=='object')S.activity={};
+  if(!S.earnedBadges||!Array.isArray(S.earnedBadges))S.earnedBadges=[];
+  if(!S.reviews||typeof S.reviews!=='object')S.reviews={};
+  if(!S.pomoLog||!Array.isArray(S.pomoLog))S.pomoLog=[];
+  if(typeof S.xp!=='number')S.xp=0;
+  if(typeof S.streak!=='number')S.streak=0;
+  if(typeof S.pomoDone!=='number')S.pomoDone=0;
+  if(typeof S.totalDone!=='number')S.totalDone=0;
+
+  let fixed=0;
+  S.tasks=S.tasks.filter(t=>t&&typeof t==='object'&&t.name).map(t=>{
+    if(!t.type){t.type='rough';fixed++;}
+    if(!t.date||!/^\d{4}-\d{2}-\d{2}$/.test(t.date)){t.date=fmtDate(new Date());fixed++;}
+    if(typeof t.done!=='boolean'){t.done=false;fixed++;}
+    if(!t.repeat){t.repeat='none';fixed++;}
     return t;
   });
-  // assignments の修復
-  S.assignments = S.assignments.filter(a => {
-    if(!a || typeof a !== 'object') return false;
-    if(!a.name || typeof a.name !== 'string') return false;
-    return true;
-  }).map(a => {
-    if(!a.date || !/^\d{4}-\d{2}-\d{2}$/.test(a.date)) { a.date=fmtDate(new Date()); fixed++; }
-    if(typeof a.done !== 'boolean') { a.done=false; fixed++; }
-    if(!a.priority) { a.priority='mid'; fixed++; }
+  S.assignments=S.assignments.filter(a=>a&&typeof a==='object'&&a.name).map(a=>{
+    if(!a.date||!/^\d{4}-\d{2}-\d{2}$/.test(a.date)){a.date=fmtDate(new Date());fixed++;}
+    if(typeof a.done!=='boolean'){a.done=false;fixed++;}
+    if(!a.priority){a.priority='mid';fixed++;}
     return a;
   });
-  // subjects
-  S.subjects = (S.subjects||[]).filter(s=>s&&typeof s==='string');
-  if(fixed > 0){ saveS(); console.log(`[StudyOS] セルフヒーリング: ${fixed}件修復`); }
+  S.subjects=S.subjects.filter(s=>s&&typeof s==='string');
+  if(fixed>0){saveS();console.log('[StudyOS] セルフヒーリング:',fixed,'件修復');}
 }
 
 // ===========================
