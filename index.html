@@ -719,25 +719,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
       </div>
     </div>
 
-    <div class="section-title">☁️ PC↔スマホ 同期（GitHub Gist）</div>
+    <div class="section-title">🔥 リアルタイム同期（Firebase）</div>
     <div class="card">
       <div style="font-size:12px;color:var(--text-sub);margin-bottom:12px;line-height:1.7">
-        GitHub Personal Access Tokenを入力すると、PC・スマホ間でデータを同期できます。<br>
-        <a href="https://github.com/settings/tokens/new?scopes=gist&description=StudyOS" target="_blank" style="color:var(--accent2)">← Token発行ページ（gistにチェックだけ入れてGenerate）</a>
+        PC・スマホ間でデータをリアルタイム同期します。<br>設定不要、このボタンだけでOKです。
       </div>
-      <div class="form-group">
-        <label class="form-label">GitHub Token</label>
-        <input class="form-input" id="gistToken" type="password" placeholder="ghp_xxxxxxxxxxxx" oninput="saveGistConfig()" />
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button onclick="fbUpload()" class="btn-primary" style="margin:0;flex:1;font-size:14px">☁️ アップロード</button>
+        <button onclick="fbDownload()" class="btn-ghost" style="margin:0;flex:1;font-size:14px">📥 ダウンロード</button>
       </div>
-      <div class="form-group">
-        <label class="form-label">Gist ID（初回同期後に自動入力）</label>
-        <input class="form-input" id="gistId" placeholder="自動入力されます" oninput="saveGistConfig()" />
-      </div>
-      <div style="display:flex;gap:8px;margin-top:4px">
-        <button onclick="syncToGist()" class="btn-primary" style="margin:0;flex:1;font-size:14px">☁️ アップロード</button>
-        <button onclick="syncFromGist()" class="btn-ghost" style="margin:0;flex:1;font-size:14px">📥 ダウンロード</button>
-      </div>
-      <div style="font-size:11px;color:var(--text-sub);margin-top:8px;text-align:center" id="syncStatus"></div>
+      <button onclick="toggleAutoSync()" class="btn-ghost" style="margin:0;width:100%" id="autoSyncBtn">🔄 自動同期: オフ</button>
+      <div style="font-size:11px;color:var(--text-sub);margin-top:8px;text-align:center" id="fbSyncStatus"></div>
     </div>
 
     <div class="section-title">📋 週次振り返りレポート</div>
@@ -2498,93 +2490,109 @@ function openAddModal(){
 // ===========================
 //  GitHub Gist 同期
 // ===========================
-function saveGistConfig(){
-  const token = document.getElementById('gistToken').value.trim();
-  const gistId = document.getElementById('gistId').value.trim();
-  localStorage.setItem('studyos_gist_token', token);
-  localStorage.setItem('studyos_gist_id', gistId);
-}
-function loadGistConfig(){
-  const t = document.getElementById('gistToken');
-  const g = document.getElementById('gistId');
-  if(t) t.value = localStorage.getItem('studyos_gist_token')||'';
-  if(g) g.value = localStorage.getItem('studyos_gist_id')||'';
-}
-function setSyncStatus(msg, ok=true){
-  const el = document.getElementById('syncStatus');
+// ===========================
+//  Firebase リアルタイム同期
+// ===========================
+const FB_CONFIG = {
+  apiKey: "AIzaSyCjUd9hnaspOONWap7n8WH5tQV1XuFeSrw",
+  databaseURL: "https://studyos-9fd73-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "studyos-9fd73"
+};
+const FB_URL = `${FB_CONFIG.databaseURL}/studyos-data.json?auth=`;
+let fbAutoSync = false;
+let fbAutoTimer = null;
+let fbListener = null;
+
+function setFbStatus(msg, ok=true){
+  const el = document.getElementById('fbSyncStatus');
   if(el){ el.textContent = msg; el.style.color = ok?'var(--success)':'var(--danger)'; }
 }
 
-async function syncToGist(){
-  const token = localStorage.getItem('studyos_gist_token');
-  if(!token){ setSyncStatus('⚠️ GitHubトークンを入力してください',false); return; }
-  setSyncStatus('☁️ アップロード中…');
-  const gistId = localStorage.getItem('studyos_gist_id');
-  const content = JSON.stringify(S, null, 2);
+async function fbUpload(){
+  setFbStatus('☁️ アップロード中…');
   try{
-    let res, json;
-    if(gistId){
-      // 既存Gistを更新
-      res = await fetch(`https://api.github.com/gists/${gistId}`, {
-        method:'PATCH',
-        headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},
-        body: JSON.stringify({files:{'studyos-data.json':{content}}})
-      });
-    } else {
-      // 新規Gist作成
-      res = await fetch('https://api.github.com/gists', {
-        method:'POST',
-        headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},
-        body: JSON.stringify({
-          description:'StudyOS データバックアップ',
-          public: false,
-          files:{'studyos-data.json':{content}}
-        })
-      });
-    }
-    json = await res.json();
-    if(!res.ok) throw new Error(json.message||'エラー');
-    const newId = json.id;
-    localStorage.setItem('studyos_gist_id', newId);
-    const el = document.getElementById('gistId');
-    if(el) el.value = newId;
-    setSyncStatus(`✅ アップロード完了（${new Date().toLocaleTimeString('ja-JP')}）`);
-    showToast('☁️ Gistに同期しました','ok',2500);
-  } catch(e){
-    setSyncStatus(`❌ エラー: ${e.message}`,false);
-    showToast('同期に失敗しました','err',3000);
-  }
-}
-
-async function syncFromGist(){
-  const token = localStorage.getItem('studyos_gist_token');
-  const gistId = localStorage.getItem('studyos_gist_id');
-  if(!token){ setSyncStatus('⚠️ GitHubトークンを入力してください',false); return; }
-  if(!gistId){ setSyncStatus('⚠️ Gist IDがありません。先にアップロードしてください',false); return; }
-  setSyncStatus('📥 ダウンロード中…');
-  try{
-    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-      headers:{'Authorization':`token ${token}`}
+    const res = await fetch(FB_URL, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({data: S, updated: Date.now()})
     });
-    const json = await res.json();
-    if(!res.ok) throw new Error(json.message||'エラー');
-    const raw = json.files['studyos-data.json']?.content;
-    if(!raw) throw new Error('データが見つかりません');
-    const remote = JSON.parse(raw);
-    if(!confirm('ダウンロードすると現在のデータが上書きされます。続けますか？')) return;
-    S = remote;
-    selfHeal();
-    saveS(); renderAll();
-    setSyncStatus(`✅ ダウンロード完了（${new Date().toLocaleTimeString('ja-JP')}）`);
-    showToast('📥 データを同期しました','ok',2500);
+    if(!res.ok) throw new Error('アップロード失敗');
+    setFbStatus('✅ アップロード完了 ' + new Date().toLocaleTimeString('ja-JP'));
+    showToast('☁️ Firebaseに同期しました','ok',2000);
   } catch(e){
-    setSyncStatus(`❌ エラー: ${e.message}`,false);
-    showToast('同期に失敗しました','err',3000);
+    setFbStatus('❌ エラー: ' + e.message, false);
+    showToast('同期に失敗しました','err',2500);
   }
 }
 
-// 起動時にGist設定を読み込む
-document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>{ loadGistConfig(); selfHeal(); }, 500); });
+async function fbDownload(){
+  setFbStatus('📥 ダウンロード中…');
+  try{
+    const res = await fetch(FB_URL);
+    if(!res.ok) throw new Error('ダウンロード失敗');
+    const json = await res.json();
+    if(!json||!json.data) throw new Error('データが見つかりません');
+    if(!confirm('ダウンロードすると現在のデータが上書きされます。続けますか？')) return;
+    S = json.data;
+    selfHeal(); saveS(); renderAll();
+    setFbStatus('✅ ダウンロード完了 ' + new Date().toLocaleTimeString('ja-JP'));
+    showToast('📥 データを同期しました','ok',2000);
+  } catch(e){
+    setFbStatus('❌ エラー: ' + e.message, false);
+    showToast('同期に失敗しました','err',2500);
+  }
+}
+
+// 自動同期（データ変更時に自動アップロード、30秒ごとに自動ダウンロード）
+function toggleAutoSync(){
+  fbAutoSync = !fbAutoSync;
+  const btn = document.getElementById('autoSyncBtn');
+  if(fbAutoSync){
+    btn.textContent = '🔄 自動同期: オン';
+    btn.style.color = 'var(--success)';
+    btn.style.borderColor = 'var(--success)';
+    // 30秒ごとに自動ダウンロード
+    fbAutoTimer = setInterval(async ()=>{
+      try{
+        const res = await fetch(FB_URL);
+        const json = await res.json();
+        if(json&&json.data&&json.updated>( S._lastUpload||0)){
+          S = json.data; selfHeal(); saveS(); renderAll();
+          setFbStatus('🔄 自動同期: ' + new Date().toLocaleTimeString('ja-JP'));
+        }
+      } catch(e){}
+    }, 30000);
+    setFbStatus('🔄 自動同期オン（30秒ごとに確認）');
+    showToast('🔄 自動同期をオンにしました','ok',2000);
+  } else {
+    btn.textContent = '🔄 自動同期: オフ';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+    clearInterval(fbAutoTimer);
+    setFbStatus('自動同期オフ');
+  }
+  localStorage.setItem('studyos_autosync', fbAutoSync?'1':'0');
+}
+
+// saveS をラップして自動アップロード
+const _origSaveS = saveS;
+function saveS(){
+  localStorage.setItem('studyos_v4', JSON.stringify(S));
+  if(fbAutoSync){
+    S._lastUpload = Date.now();
+    fetch(FB_URL, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({data:S, updated:Date.now()})}).catch(()=>{});
+  }
+}
+
+// 起動時に自動同期設定を復元
+document.addEventListener('DOMContentLoaded', ()=>{
+  setTimeout(()=>{
+    selfHeal();
+    if(localStorage.getItem('studyos_autosync')==='1'){
+      toggleAutoSync();
+    }
+  }, 600);
+});
 
 // ===========================
 //  週次振り返りレポート生成
