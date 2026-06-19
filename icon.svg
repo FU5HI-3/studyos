@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 背景 -->
+  <rect width="512" height="512" rx="100" fill="#1a1d27"/>
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6c63ff"/>
+      <stop offset="100%" stop-color="#f5a623"/>
+    </linearGradient>
+  </defs>
+  <!-- チェックマーク（丸） -->
+  <circle cx="256" cy="220" r="130" fill="none" stroke="url(#g1)" stroke-width="28" stroke-linecap="round"/>
+  <!-- チェック -->
+  <polyline points="180,220 235,278 340,168" fill="none" stroke="url(#g1)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 下のライン（タスクリスト感） -->
+  <line x1="140" y1="400" x2="372" y2="400" stroke="#f5a623" stroke-width="18" stroke-linecap="round" opacity="0.5"/>
+  <line x1="140" y1="440" x2="300" y2="440" stroke="#6c63ff" stroke-width="18" stroke-linecap="round" opacity="0.3"/>
+</svg>
