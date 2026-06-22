@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="StudyOS">
+<meta name="apple-mobile-web-app-title" content="Gérer">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1a1d27">
-<title>StudyOS</title>
+<title>Gérer</title>
 <style>
 :root{
   --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3350;
@@ -22,7 +22,7 @@
 .theme-light{--bg:#f0f2f8;--surface:#fff;--surface2:#e8ecf8;--border:#d0d4e8;--text:#1a1d27;--text-sub:#6670a0;--accent:#e8920a;--accent2:#5248e0;--danger:#e04040;--success:#2bb570;--warn:#e07020;--safe:#2a9fd0;}
 .theme-pastel{--bg:#f5f0ff;--surface:#fff;--surface2:#ede8ff;--border:#d8ccff;--text:#2d1f6e;--text-sub:#8070b0;--accent:#ff8fab;--accent2:#9b8aff;--danger:#ff5577;--success:#5eca90;--warn:#ffaa55;--safe:#77ccff;}
 
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 html,body{height:100%;width:100%;overflow:hidden}
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
 #app{display:flex;flex-direction:column;height:100dvh;max-width:430px;margin:0 auto;overflow:hidden;position:relative}
@@ -382,6 +382,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 .review-area{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:14px;font-family:var(--font);resize:none;min-height:80px;outline:none}
 .review-area:focus{border-color:var(--accent)}
 
+/* カテゴリー色分け */
+.cat-school{border-left:3px solid var(--accent2);}
+.cat-private{border-left:3px solid var(--accent);}
+.cat-event{border-left:3px solid var(--success);}
+.cat-badge{font-size:10px;padding:2px 7px;border-radius:8px;font-weight:700;white-space:nowrap;}
+.cat-badge.school{background:rgba(108,99,255,.2);color:var(--accent2);}
+.cat-badge.private{background:rgba(245,166,35,.15);color:var(--accent);}
+.cat-badge.event{background:rgba(76,219,138,.15);color:var(--success);}
+
+/* 予定カード */
+.event-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);border-left:3px solid var(--success);padding:14px;margin:8px 14px 0;}
+.event-card-top{display:flex;align-items:center;gap:8px;}
+.event-name{font-size:15px;font-weight:600;flex:1;}
+.event-meta{font-size:11px;color:var(--text-sub);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;}
+
 /* EMPTY */
 .empty{text-align:center;padding:32px 20px;color:var(--text-sub)}
 .empty .ei{font-size:34px;margin-bottom:8px}
@@ -485,7 +500,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 <!-- HEADER -->
 <div class="header">
   <div class="header-left">
-    <div class="header-title">Study<span>OS</span></div>
+    <div class="header-title">Gé<span>rer</span></div>
     <div class="header-sub" id="headerSub">今日もがんばろ 💪</div>
   </div>
   <div class="header-right">
@@ -786,9 +801,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">何を追加する？</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
       <button class="btn-ghost" style="padding:18px 8px;border-radius:12px;font-size:14px" onclick="closeModal('addModal');openAssignModal()">📚 課題<br><span style="font-size:10px;color:var(--text-sub)">締切・優先度</span></button>
       <button class="btn-ghost" style="padding:18px 8px;border-radius:12px;font-size:14px" onclick="closeModal('addModal');openTaskModal()">✅ タスク<br><span style="font-size:10px;color:var(--text-sub)">厳密/大まか</span></button>
+      <button class="btn-ghost" style="padding:18px 8px;border-radius:12px;font-size:14px" onclick="closeModal('addModal');openEventModal()">📅 予定<br><span style="font-size:10px;color:var(--text-sub)">場所・時間</span></button>
     </div>
     <button class="btn-ghost" onclick="closeModal('addModal')">キャンセル</button>
   </div>
@@ -799,6 +815,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title" id="assignModalTitle">課題を追加</div>
+    <div class="form-group">
+      <label class="form-label">カテゴリー</label>
+      <div class="pill-select" id="assignCatPills">
+        <button class="pill selected" onclick="selectPill('assignCatPills',this,'school')">📚 学校</button>
+        <button class="pill" onclick="selectPill('assignCatPills',this,'private')">🏠 プライベート</button>
+      </div>
+    </div>
     <div class="form-group">
       <label class="form-label">課題名 *</label>
       <input class="form-input" id="assignName" placeholder="例：レポート第3回" />
@@ -833,6 +856,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title" id="taskModalTitle">タスクを追加</div>
+    <div class="form-group">
+      <label class="form-label">カテゴリー</label>
+      <div class="pill-select" id="taskCatPills">
+        <button class="pill selected" onclick="selectPill('taskCatPills',this,'school')">📚 学校</button>
+        <button class="pill" onclick="selectPill('taskCatPills',this,'private')">🏠 プライベート</button>
+      </div>
+    </div>
     <div class="form-group"><label class="form-label">タスク名 *</label><input class="form-input" id="taskName" placeholder="例：英単語100語" /></div>
     <div class="form-group">
       <label class="form-label">計画タイプ</label>
@@ -888,7 +918,31 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
   </div>
 </div>
 
-<!-- TASK EDIT MODAL (クイック追加後の詳細編集) -->
+<!-- EVENT MODAL -->
+<div class="modal-overlay" id="eventModal" onclick="closeIfBg(event,'eventModal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="eventModalTitle">予定を追加</div>
+    <div class="form-group"><label class="form-label">予定名 *</label><input class="form-input" id="eventName" placeholder="例：友達とランチ" /></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">日付 *</label><input class="form-input" type="date" id="eventDate" /></div>
+      <div class="form-group"><label class="form-label">カテゴリー</label>
+        <div class="pill-select" id="eventCatPills" style="margin-top:6px">
+          <button class="pill selected" onclick="selectPill('eventCatPills',this,'private')">🏠 プライベート</button>
+          <button class="pill" onclick="selectPill('eventCatPills',this,'school')">📚 学校</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">開始時刻</label><input class="form-input" type="time" id="eventStart" value="12:00" /></div>
+      <div class="form-group"><label class="form-label">終了時刻</label><input class="form-input" type="time" id="eventEnd" value="13:00" /></div>
+    </div>
+    <div class="form-group"><label class="form-label">場所</label><input class="form-input" id="eventPlace" placeholder="例：カフェ、図書館" /></div>
+    <div class="form-group"><label class="form-label">メモ</label><textarea class="form-textarea" id="eventNote" placeholder="持ち物など"></textarea></div>
+    <button class="btn-primary" onclick="saveEvent()">保存</button>
+    <button class="btn-ghost" onclick="closeModal('eventModal')">キャンセル</button>
+  </div>
+</div>
 <div class="modal-overlay" id="editModal" onclick="closeIfBg(event,'editModal')">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -946,7 +1000,7 @@ const BADGES = [
 
 // ===== STATE =====
 let S = {
-  tasks:[],assignments:[],subjects:[],
+  tasks:[],assignments:[],subjects:[],events:[],
   activity:{},streak:0,
   xp:0,earnedBadges:[],
   pomoDone:0,totalDone:0,
@@ -959,6 +1013,7 @@ function loadS(){
   if(!S.subjects)S.subjects=[];
   if(!S.earnedBadges)S.earnedBadges=[];
   if(!S.reviews)S.reviews={};
+  if(!S.events)S.events=[];
   if(!S.pomoDone)S.pomoDone=0;
   if(!S.totalDone)S.totalDone=0;
 }
@@ -1097,12 +1152,18 @@ function buildACard(a,idx){
   const bc=a.priority==='high'?'bh':a.priority==='low'?'bl':'bm';
   const bl=a.priority==='high'?'🔴 高':a.priority==='low'?'🔵 低':'🟠 中';
   const fc=cd.cls==='urgent'?'fu':cd.cls==='warn'?'fw':'fo';
+  const catCls = a.category==='private' ? 'cat-private' : 'cat-school';
+  const catBadge = a.category==='private'
+    ? `<span class="cat-badge private">🏠 プライベート</span>`
+    : `<span class="cat-badge school">📚 学校</span>`;
   return `
-  <div class="acard${a.done?' asgn-done':''}">
+  <div class="acard ${catCls}${a.done?' asgn-done':''}">
     <div class="acard-top">
       <button class="acheck${a.done?' done':''}" onclick="toggleAssign(${idx})">${a.done?'✓':''}</button>
       <div class="aname${a.done?' done':''}">${esc(a.name)}</div>
       <div class="abadge ${bc}">${bl}</div>
+      ${catBadge}
+      <button class="abtn" onclick="openAssignModal(${idx})" style="font-size:15px">✏️</button>
       <button class="abtn" onclick="deleteAssign(${idx})">✕</button>
     </div>
     <div class="ameta">
@@ -1288,8 +1349,12 @@ function taskItemHTML(t,idx){
   const relAssign = S.assignments.find(a=>!a.done&&a.subject&&t.subject&&a.subject===t.subject);
   const isNearDeadline = relAssign && getCD(relAssign.date,relAssign.time).hours < 48;
   const infoClass = isNearDeadline&&!t.done ? 'deadline-near' : '';
+  const catCls = t.category==='private'?'cat-private':'cat-school';
+  const catBadge = t.category==='private'
+    ?`<span class="cat-badge private">🏠</span>`
+    :`<span class="cat-badge school">📚</span>`;
   return `
-  <div class="task-item task-anim" data-idx="${idx}" draggable="true"
+  <div class="task-item task-anim ${catCls}" data-idx="${idx}" draggable="true"
     ondragstart="onDragStart(event,${idx})"
     ondragover="onDragOver(event)"
     ondragend="onDragEnd(event)"
@@ -1300,7 +1365,7 @@ function taskItemHTML(t,idx){
     <div class="drag-handle">⠿</div>
     <button class="check-btn${t.done?' done':''}" onclick="toggleTask(${idx})">${t.done?'✓':''}</button>
     <div class="task-body" onclick="openEditModal(${idx})" style="cursor:pointer">
-      <div class="task-name${t.done?' done':''} ${prioClass}">${esc(t.name)}</div>
+      <div class="task-name${t.done?' done':''} ${prioClass}">${catBadge} ${esc(t.name)}</div>
       <div class="task-info ${infoClass}">${info}${actual} ${tb}${rb}${t.quickAdded&&!t.done?'<span style="font-size:10px;color:var(--accent);margin-left:4px">✏️</span>':''}</div>
     </div>
     ${nextBtn}
@@ -1417,8 +1482,9 @@ function calNext(){calM++;if(calM>11){calM=0;calY++;}renderCal();}
 function getDayData(key){
   const tasks=S.tasks.filter(t=>t.date===key);
   const assigns=S.assignments.filter(a=>a.date===key);
+  const events=(S.events||[]).filter(e=>e.date===key);
   const doneTasks=tasks.filter(t=>t.done).length;
-  return{tasks,assigns,doneTasks,total:tasks.length,hasAssign:assigns.length>0};
+  return{tasks,assigns,events,doneTasks,total:tasks.length,hasAssign:assigns.length>0,hasEvent:events.length>0};
 }
 
 function renderCal(){
@@ -1495,6 +1561,23 @@ function renderCalDetail(){
       <div class="cal-item-badge ${urgCls}">${a.done?'✅':cd.label}</div>
     </div>`;
   });
+  // 予定
+  dd.events.forEach(ev=>{
+    const ei=S.events.indexOf(ev);
+    const catCls=ev.category==='school'?'school':'private';
+    rows+=`<div class="cal-item-row">
+      <div style="width:22px;height:22px;flex-shrink:0;border-radius:50%;background:var(--success);display:flex;align-items:center;justify-content:center;font-size:11px">📅</div>
+      <div style="flex:1;min-width:0">
+        <div class="cal-item-name">${esc(ev.name)}</div>
+        <div style="font-size:11px;color:var(--text-sub)">${ev.start||''}${ev.end?'〜'+ev.end:''} ${ev.place?'📍'+esc(ev.place):''}</div>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center">
+        <span class="cat-badge ${catCls}">${ev.category==='school'?'📚':'🏠'}</span>
+        <button onclick="openEventModal(${ei})" class="abtn" style="font-size:13px">✏️</button>
+        <button onclick="deleteEvent(${ei});renderCal()" class="abtn">✕</button>
+      </div>
+    </div>`;
+  });
   // タスク
   dd.tasks.forEach(t=>{
     const ti=S.tasks.indexOf(t);
@@ -1525,6 +1608,7 @@ function renderCalDetail(){
       </div>
       <div class="cal-detail-add">
         <button onclick="openAssignModalDate('${selDay}')" class="cal-add-btn">📚</button>
+        <button onclick="openEventModal(-1,'${selDay}')" class="cal-add-btn">📅</button>
         <button onclick="openTaskModalDate('${selDay}')" class="cal-add-btn primary">＋ タスク</button>
       </div>
     </div>
@@ -1658,7 +1742,9 @@ function openAssignModal(idx=-1){
     document.getElementById('assignModalTitle').textContent='課題を編集';
     document.getElementById('assignName').value=a.name;document.getElementById('assignSubject').value=a.subject||'';
     document.getElementById('assignDate').value=a.date;document.getElementById('assignTime').value=a.time||'23:59';
-    document.getElementById('assignNote').value=a.note||'';selectPillVal('priorityPills',a.priority||'mid');
+    document.getElementById('assignNote').value=a.note||'';
+    selectPillVal('priorityPills',a.priority||'mid');
+    selectPillVal('assignCatPills',a.category||'school');
   } else {
     document.getElementById('assignModalTitle').textContent='課題を追加';
     document.getElementById('assignName').value='';document.getElementById('assignSubject').value='';
@@ -1671,7 +1757,7 @@ function openAssignModalDate(key){closeModal('addModal');editAIdx=-1;document.ge
 function saveAssign(){
   const name=document.getElementById('assignName').value.trim(),date=document.getElementById('assignDate').value;
   if(!name||!date){alert('課題名と締切日は必須です');return;}
-  const a={name,date,subject:document.getElementById('assignSubject').value.trim(),time:document.getElementById('assignTime').value,priority:getSelectedPill('priorityPills'),note:document.getElementById('assignNote').value.trim(),done:false,created:new Date().toISOString()};
+  const a={name,date,subject:document.getElementById('assignSubject').value.trim(),time:document.getElementById('assignTime').value,priority:getSelectedPill('priorityPills'),note:document.getElementById('assignNote').value.trim(),category:getSelectedPill('assignCatPills')||'school',done:false,created:new Date().toISOString()};
   if(editAIdx>=0){a.done=S.assignments[editAIdx].done;S.assignments[editAIdx]=a;}
   else{S.assignments.push(a);addXP(5);}
   saveS();closeModal('assignModal');renderAll();
@@ -1737,6 +1823,7 @@ function saveTask(){
     time:type==='strict'?document.getElementById('taskTime').value:null,
     duration:type==='strict'?parseInt(document.getElementById('taskDuration').value)||60:null,
     subject:document.getElementById('taskSubject').value.trim(),
+    category:getSelectedPill('taskCatPills')||'school',
     repeat, repeatDays,
     done:false,created:new Date().toISOString()
   };
@@ -2063,6 +2150,55 @@ function showToast(msg,type='ok',dur=2000){
   el.style.cssText=`position:fixed;bottom:calc(80px + var(--sab) + 10px);left:50%;transform:translateX(-50%);z-index:500;background:${type==='ok'?'var(--success)':'var(--danger)'};color:${type==='ok'?'#0f1117':'white'};padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.3);animation:fadeIn .2s ease`;
   el.textContent=msg;document.body.appendChild(el);
   setTimeout(()=>el.remove(),dur);
+}
+
+// ===== EVENTS =====
+let editEvIdx=-1;
+function openEventModal(idx=-1, prefillDate=''){
+  editEvIdx=idx;
+  if(idx>=0&&S.events[idx]){
+    const ev=S.events[idx];
+    document.getElementById('eventModalTitle').textContent='予定を編集';
+    document.getElementById('eventName').value=ev.name;
+    document.getElementById('eventDate').value=ev.date;
+    document.getElementById('eventStart').value=ev.start||'12:00';
+    document.getElementById('eventEnd').value=ev.end||'13:00';
+    document.getElementById('eventPlace').value=ev.place||'';
+    document.getElementById('eventNote').value=ev.note||'';
+    selectPillVal('eventCatPills',ev.category||'private');
+  } else {
+    document.getElementById('eventModalTitle').textContent='予定を追加';
+    document.getElementById('eventName').value='';
+    document.getElementById('eventDate').value=prefillDate||fmtDate(new Date());
+    document.getElementById('eventStart').value='12:00';
+    document.getElementById('eventEnd').value='13:00';
+    document.getElementById('eventPlace').value='';
+    document.getElementById('eventNote').value='';
+    selectPillVal('eventCatPills','private');
+  }
+  document.getElementById('eventModal').classList.add('open');
+}
+function saveEvent(){
+  const name=document.getElementById('eventName').value.trim();
+  const date=document.getElementById('eventDate').value;
+  if(!name||!date){alert('予定名と日付は必須です');return;}
+  const ev={name,date,
+    start:document.getElementById('eventStart').value,
+    end:document.getElementById('eventEnd').value,
+    place:document.getElementById('eventPlace').value.trim(),
+    note:document.getElementById('eventNote').value.trim(),
+    category:getSelectedPill('eventCatPills')||'private',
+    created:new Date().toISOString()
+  };
+  if(editEvIdx>=0)S.events[editEvIdx]=ev;
+  else S.events.push(ev);
+  saveS();closeModal('eventModal');renderAll();
+  showToast('📅 予定を追加しました','ok',2000);
+}
+function deleteEvent(idx){
+  if(!confirm('予定を削除しますか？'))return;
+  S.events.splice(idx,1);
+  saveS();renderAll();
 }
 
 // ===== CONFETTI =====
