@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Gérer">
+<meta name="apple-mobile-web-app-title" content="StudyOS">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1a1d27">
-<title>Gérer</title>
+<title>StudyOS</title>
 <style>
 :root{
   --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3350;
@@ -382,7 +382,41 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 .review-area{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:14px;font-family:var(--font);resize:none;min-height:80px;outline:none}
 .review-area:focus{border-color:var(--accent)}
 
-/* カテゴリー色分け */
+/* イベントタイプ別スタイル */
+.event-type-test{border-left:3px solid var(--danger);}
+.event-type-event{border-left:3px solid var(--safe);}
+.event-type-holiday{border-left:3px solid var(--success);}
+.event-type-announcement{border-left:3px solid var(--accent);}
+.event-type-other{border-left:3px solid var(--text-sub);}
+
+/* 終日イベントバー（カレンダー上） */
+.allday-bar{
+  font-size:9px;font-weight:700;
+  border-radius:3px;padding:1px 4px;
+  margin-top:2px;text-align:left;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  width:100%;display:block;
+}
+.allday-bar.test{background:rgba(255,90,90,.3);color:var(--danger);}
+.allday-bar.event{background:rgba(91,200,245,.25);color:var(--safe);}
+.allday-bar.holiday{background:rgba(76,219,138,.25);color:var(--success);}
+.allday-bar.announcement{background:rgba(245,166,35,.25);color:var(--accent);}
+.allday-bar.other{background:rgba(123,130,176,.2);color:var(--text-sub);}
+
+/* 告知バナー（ホーム上部） */
+.announcement-banner{
+  margin:8px 14px 0;
+  border-radius:var(--radius);
+  border:1.5px solid var(--accent);
+  background:rgba(245,166,35,.08);
+  padding:12px 14px;
+}
+.ann-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.ann-icon{font-size:18px;}
+.ann-title{font-size:13px;font-weight:700;flex:1;}
+.ann-date{font-size:11px;color:var(--text-sub);}
+.ann-body{font-size:13px;color:var(--text-sub);line-height:1.5;}
+.ann-dismiss{background:none;border:none;color:var(--text-sub);cursor:pointer;font-size:16px;padding:2px 4px;}
 .cat-school{border-left:3px solid var(--accent2);}
 .cat-private{border-left:3px solid var(--accent);}
 .cat-event{border-left:3px solid var(--success);}
@@ -500,7 +534,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 <!-- HEADER -->
 <div class="header">
   <div class="header-left">
-    <div class="header-title">Gé<span>rer</span></div>
+    <div class="header-title">Study<span>OS</span></div>
     <div class="header-sub" id="headerSub">今日もがんばろ 💪</div>
   </div>
   <div class="header-right">
@@ -546,6 +580,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
       <div class="summary-tile"><div class="s-label">達成率</div><div class="s-num" id="sumRate" style="color:var(--accent2)">0%</div><div class="s-sub">サボり <span id="sumSabo" style="color:var(--danger)">0%</span></div></div>
       <div class="summary-tile"><div class="s-label">次の締切</div><div class="s-num col-danger" id="sumNext">―</div><div class="s-sub" id="sumNextName">課題なし</div></div>
     </div>
+
+    <!-- 告知バナー -->
+    <div id="announcementArea"></div>
 
     <!-- QUICK ADD -->
     <div class="section-title">⚡ クイック追加</div>
@@ -923,22 +960,48 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title" id="eventModalTitle">予定を追加</div>
-    <div class="form-group"><label class="form-label">予定名 *</label><input class="form-input" id="eventName" placeholder="例：友達とランチ" /></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">日付 *</label><input class="form-input" type="date" id="eventDate" /></div>
-      <div class="form-group"><label class="form-label">カテゴリー</label>
-        <div class="pill-select" id="eventCatPills" style="margin-top:6px">
-          <button class="pill selected" onclick="selectPill('eventCatPills',this,'private')">🏠 プライベート</button>
-          <button class="pill" onclick="selectPill('eventCatPills',this,'school')">📚 学校</button>
-        </div>
+    <div class="form-group">
+      <label class="form-label">種類</label>
+      <div class="pill-select" id="eventTypePills">
+        <button class="pill" onclick="selectPill('eventTypePills',this,'test');toggleEventFields()">📝 テスト</button>
+        <button class="pill selected" onclick="selectPill('eventTypePills',this,'event');toggleEventFields()">📅 行事</button>
+        <button class="pill" onclick="selectPill('eventTypePills',this,'holiday');toggleEventFields()">🏖 休日</button>
+        <button class="pill" onclick="selectPill('eventTypePills',this,'announcement');toggleEventFields()">📢 告知</button>
+        <button class="pill" onclick="selectPill('eventTypePills',this,'other');toggleEventFields()">📌 その他</button>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">タイトル *</label><input class="form-input" id="eventName" placeholder="例：数学テスト" /></div>
+    <div class="form-group">
+      <label class="form-label">カテゴリー</label>
+      <div class="pill-select" id="eventCatPills">
+        <button class="pill selected" onclick="selectPill('eventCatPills',this,'school')">📚 学校</button>
+        <button class="pill" onclick="selectPill('eventCatPills',this,'private')">🏠 プライベート</button>
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">開始時刻</label><input class="form-input" type="time" id="eventStart" value="12:00" /></div>
-      <div class="form-group"><label class="form-label">終了時刻</label><input class="form-input" type="time" id="eventEnd" value="13:00" /></div>
+      <div class="form-group"><label class="form-label">日付 *</label><input class="form-input" type="date" id="eventDate" /></div>
+      <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:13px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer">
+          <input type="checkbox" id="eventAllDay" onchange="toggleEventFields()" style="width:18px;height:18px;accent-color:var(--accent2)">
+          終日
+        </label>
+      </div>
     </div>
-    <div class="form-group"><label class="form-label">場所</label><input class="form-input" id="eventPlace" placeholder="例：カフェ、図書館" /></div>
-    <div class="form-group"><label class="form-label">メモ</label><textarea class="form-textarea" id="eventNote" placeholder="持ち物など"></textarea></div>
+    <div id="eventTimeFields">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">開始時刻</label><input class="form-input" type="time" id="eventStart" value="09:00" /></div>
+        <div class="form-group"><label class="form-label">終了時刻</label><input class="form-input" type="time" id="eventEnd" value="10:00" /></div>
+      </div>
+    </div>
+    <!-- 告知専用：範囲指定 -->
+    <div id="eventAnnouncementFields" style="display:none">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">表示開始日</label><input class="form-input" type="date" id="eventAnnStart" /></div>
+        <div class="form-group"><label class="form-label">表示終了日</label><input class="form-input" type="date" id="eventAnnEnd" /></div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">場所</label><input class="form-input" id="eventPlace" placeholder="例：第1教室、オンライン" /></div>
+    <div class="form-group"><label class="form-label">メモ・詳細</label><textarea class="form-textarea" id="eventNote" placeholder="持ち物、連絡事項など"></textarea></div>
     <button class="btn-primary" onclick="saveEvent()">保存</button>
     <button class="btn-ghost" onclick="closeModal('eventModal')">キャンセル</button>
   </div>
@@ -1047,6 +1110,7 @@ function fmtDate(d){return d.toISOString().slice(0,10);}
 function renderAll(){
   renderHeader(); renderSummary(); renderXP();
   renderHomeAssignments(); renderTodayUnified();
+  renderAnnouncements();
   renderAssignList(); renderTaskList();
   renderStats(); renderSubjectList(); updateSubjectDropdowns();
   loadReview();
@@ -1505,22 +1569,31 @@ function renderCal(){
     if(isT)cls+=' today';
     if(isSel)cls+=' selected-day';
 
-    // 密度バッジ（数字＋色）
+    // 終日イベントバー
+    let bars='';
+    dd.events.filter(ev=>ev.allDay||ev.type==='holiday').forEach(ev=>{
+      const tc=ev.type||'other';
+      bars+=`<div class="allday-bar ${tc}">${ev.name}</div>`;
+    });
+
+    // 密度バッジ（タスク数）
     let badge='';
     if(dd.total>0){
       const bcls=dd.doneTasks===dd.total?'bdone':dd.doneTasks>0?'bpartial':'bopen';
       badge=`<div class="cal-badge ${bcls}">${dd.total}</div>`;
     }
-    // 課題締切ドット（左上）
+    // テスト・重要イベントドット
+    const hasTest=dd.events.some(ev=>ev.type==='test');
+    const testDot=hasTest?`<div style="position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:var(--danger);box-shadow:0 0 4px rgba(255,90,90,.7)"></div>`:'';
+    // 課題締切ドット
     const assignDot=dd.hasAssign?`<div class="cal-assign-dot"></div>`:'';
-    // ＋アイコン（ホバーで出る）
     const plus=`<div class="cal-plus">＋</div>`;
 
     html+=`<div class="${cls}" onclick="tapCal('${key}')"
       ondragover="onCalDragOver(event,'${key}')"
       ondragleave="onCalDragLeave(event)"
       ondrop="onDropToDate(event,'${key}')"
-    >${d}${plus}${assignDot}${badge}</div>`;
+    >${d}${plus}${testDot}${assignDot}${badge}${bars}</div>`;
   }
   const gridEl=document.getElementById('calGrid2');
   if(gridEl)gridEl.innerHTML=html;
@@ -2154,51 +2227,114 @@ function showToast(msg,type='ok',dur=2000){
 
 // ===== EVENTS =====
 let editEvIdx=-1;
+
+function toggleEventFields(){
+  const type=getSelectedPill('eventTypePills');
+  const allDay=document.getElementById('eventAllDay')?.checked;
+  const timeFields=document.getElementById('eventTimeFields');
+  const annFields=document.getElementById('eventAnnouncementFields');
+  if(timeFields) timeFields.style.display=(allDay||type==='announcement')?'none':'';
+  if(annFields) annFields.style.display=type==='announcement'?'':'none';
+}
+
 function openEventModal(idx=-1, prefillDate=''){
   editEvIdx=idx;
+  const today=fmtDate(new Date());
   if(idx>=0&&S.events[idx]){
     const ev=S.events[idx];
     document.getElementById('eventModalTitle').textContent='予定を編集';
     document.getElementById('eventName').value=ev.name;
     document.getElementById('eventDate').value=ev.date;
-    document.getElementById('eventStart').value=ev.start||'12:00';
-    document.getElementById('eventEnd').value=ev.end||'13:00';
+    document.getElementById('eventStart').value=ev.start||'09:00';
+    document.getElementById('eventEnd').value=ev.end||'10:00';
     document.getElementById('eventPlace').value=ev.place||'';
     document.getElementById('eventNote').value=ev.note||'';
-    selectPillVal('eventCatPills',ev.category||'private');
+    document.getElementById('eventAllDay').checked=!!ev.allDay;
+    if(document.getElementById('eventAnnStart')) document.getElementById('eventAnnStart').value=ev.annStart||today;
+    if(document.getElementById('eventAnnEnd')) document.getElementById('eventAnnEnd').value=ev.annEnd||today;
+    selectPillVal('eventTypePills',ev.type||'event');
+    selectPillVal('eventCatPills',ev.category||'school');
   } else {
     document.getElementById('eventModalTitle').textContent='予定を追加';
     document.getElementById('eventName').value='';
-    document.getElementById('eventDate').value=prefillDate||fmtDate(new Date());
-    document.getElementById('eventStart').value='12:00';
-    document.getElementById('eventEnd').value='13:00';
+    document.getElementById('eventDate').value=prefillDate||today;
+    document.getElementById('eventStart').value='09:00';
+    document.getElementById('eventEnd').value='10:00';
     document.getElementById('eventPlace').value='';
     document.getElementById('eventNote').value='';
-    selectPillVal('eventCatPills','private');
+    document.getElementById('eventAllDay').checked=false;
+    if(document.getElementById('eventAnnStart')) document.getElementById('eventAnnStart').value=today;
+    if(document.getElementById('eventAnnEnd')) document.getElementById('eventAnnEnd').value=today;
+    selectPillVal('eventTypePills','event');
+    selectPillVal('eventCatPills','school');
   }
+  toggleEventFields();
   document.getElementById('eventModal').classList.add('open');
 }
+
 function saveEvent(){
   const name=document.getElementById('eventName').value.trim();
   const date=document.getElementById('eventDate').value;
-  if(!name||!date){alert('予定名と日付は必須です');return;}
-  const ev={name,date,
-    start:document.getElementById('eventStart').value,
-    end:document.getElementById('eventEnd').value,
+  if(!name||!date){alert('タイトルと日付は必須です');return;}
+  const type=getSelectedPill('eventTypePills')||'event';
+  const allDay=document.getElementById('eventAllDay').checked;
+  const ev={
+    name,date,type,
+    allDay,
+    start:allDay||type==='announcement'?null:document.getElementById('eventStart').value,
+    end:allDay||type==='announcement'?null:document.getElementById('eventEnd').value,
+    annStart:type==='announcement'?(document.getElementById('eventAnnStart')?.value||date):null,
+    annEnd:type==='announcement'?(document.getElementById('eventAnnEnd')?.value||date):null,
     place:document.getElementById('eventPlace').value.trim(),
     note:document.getElementById('eventNote').value.trim(),
-    category:getSelectedPill('eventCatPills')||'private',
+    category:getSelectedPill('eventCatPills')||'school',
     created:new Date().toISOString()
   };
   if(editEvIdx>=0)S.events[editEvIdx]=ev;
   else S.events.push(ev);
   saveS();closeModal('eventModal');renderAll();
-  showToast('📅 予定を追加しました','ok',2000);
+  const labels={test:'テストを追加',event:'行事を追加',holiday:'休日を追加',announcement:'告知を追加',other:'予定を追加'};
+  showToast(`📅 ${labels[type]||'予定を追加'}しました`,'ok',2000);
 }
+
 function deleteEvent(idx){
   if(!confirm('予定を削除しますか？'))return;
   S.events.splice(idx,1);
   saveS();renderAll();
+}
+
+// 告知バナーをホームに表示
+function renderAnnouncements(){
+  const el=document.getElementById('announcementArea');
+  if(!el)return;
+  const today=fmtDate(new Date());
+  const active=(S.events||[]).filter(ev=>
+    ev.type==='announcement'&&
+    (ev.annStart||ev.date)<=today&&
+    (ev.annEnd||ev.date)>=today
+  );
+  if(!active.length){el.innerHTML='';return;}
+  el.innerHTML=active.map((ev,i)=>{
+    const idx=S.events.indexOf(ev);
+    return `<div class="announcement-banner">
+      <div class="ann-header">
+        <div class="ann-icon">📢</div>
+        <div class="ann-title">${esc(ev.name)}</div>
+        <div class="ann-date">${ev.annEnd?ev.annEnd+'まで':ev.date}</div>
+        <button class="ann-dismiss" onclick="dismissAnn(${idx})" title="非表示">✕</button>
+      </div>
+      ${ev.note?`<div class="ann-body">${esc(ev.note)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function dismissAnn(idx){
+  // 一時的に非表示（削除はしない）
+  if(!S.dismissedAnn)S.dismissedAnn=[];
+  S.dismissedAnn.push(S.events[idx].created);
+  saveS();
+  const el=document.getElementById('announcementArea');
+  if(el)el.innerHTML='';
 }
 
 // ===== CONFETTI =====
