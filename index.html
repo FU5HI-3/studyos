@@ -681,7 +681,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
         <div style="flex:1">
           <div class="stat-row"><div class="stat-key">✅ 完了</div><div class="stat-val col-success" id="statDone">0</div></div>
           <div class="stat-row"><div class="stat-key">😴 未完了</div><div class="stat-val col-danger" id="statSabo">0</div></div>
-          <div class="stat-row"><div class="stat-key">⏱ 累計時間</div><div class="stat-val col-accent" id="statTime">0h</div></div>
           <div class="stat-row" style="border:none"><div class="stat-key">🏆 獲得XP</div><div class="stat-val" style="color:var(--accent2)" id="statXP">0</div></div>
         </div>
       </div>
@@ -695,18 +694,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
     <div class="section-title">🎓 科目別達成率</div>
     <div class="card" id="subjectStats">
       <div class="empty" style="padding:16px"><p>科目付きタスクを追加すると表示されます</p></div>
-    </div>
-
-    <!-- ポモドーロ分析（時間帯別） -->
-    <div class="section-title">🍅 ポモドーロ分析</div>
-    <div class="card">
-      <div style="font-size:13px;font-weight:700;margin-bottom:4px">時間帯別の作業量</div>
-      <div style="font-size:11px;color:var(--text-sub);margin-bottom:10px">どの時間帯に一番集中できているか</div>
-      <div id="pomoAnalysis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"></div>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:13px">
-        <span style="color:var(--text-sub)">累計ポモドーロ</span>
-        <span style="font-weight:700;color:var(--danger)" id="totalPomoCount">0 🍅</span>
-      </div>
     </div>
 
     <!-- 週間バーチャート -->
@@ -750,6 +737,34 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
         <div class="theme-opt" data-theme="pastel" onclick="setTheme('pastel',this)"><div class="theme-dot" style="background:#ff8fab"></div>パステル</div>
       </div>
     </div>
+
+    <div class="section-title">🔔 通知設定</div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--text-sub);margin-bottom:12px">締切前に通知するタイミングを設定できます</div>
+      <div class="setting-row">
+        <div><div style="font-size:15px">通知を許可</div><div style="font-size:12px;color:var(--text-sub)" id="notifStatus">未設定</div></div>
+        <button class="icon-btn" onclick="requestNotifPermission()" id="notifBtn">🔔</button>
+      </div>
+      <div class="setting-row">
+        <div style="font-size:14px">締切の何時間前に通知？</div>
+        <select class="form-select" id="notifHours" style="width:auto;padding:6px 10px" onchange="saveNotifSettings()">
+          <option value="1">1時間前</option>
+          <option value="3">3時間前</option>
+          <option value="6">6時間前</option>
+          <option value="12">12時間前</option>
+          <option value="24" selected>24時間前</option>
+          <option value="48">2日前</option>
+        </select>
+      </div>
+      <div class="setting-row" style="border:none">
+        <div style="font-size:14px">毎朝の今日のタスク通知</div>
+        <div class="toggle-switch" id="morningNotifToggle" onclick="toggleMorningNotif()" style="cursor:pointer">
+          <div class="toggle-knob"></div>
+        </div>
+      </div>
+      <button onclick="scheduleAllNotifs()" class="btn-ghost" style="margin-top:8px">🔔 今すぐ通知をスケジュール</button>
+    </div>
+
     <div class="section-title">科目リスト</div>
     <div class="card">
       <div style="font-size:12px;color:var(--text-sub);margin-bottom:10px">登録した科目をフォームのリストから選べます</div>
@@ -759,6 +774,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
         <button onclick="addSubject()" class="btn-primary" style="width:auto;padding:0 16px;margin:0;font-size:14px">追加</button>
       </div>
     </div>
+
     <div class="section-title">データ</div>
     <div class="card">
       <div class="setting-row">
@@ -773,9 +789,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 
     <div class="section-title">🔥 リアルタイム同期（Firebase）</div>
     <div class="card">
-      <div style="font-size:12px;color:var(--text-sub);margin-bottom:12px;line-height:1.7">
-        PC・スマホ間でデータをリアルタイム同期します。<br>設定不要、このボタンだけでOKです。
-      </div>
+      <div style="font-size:12px;color:var(--text-sub);margin-bottom:12px;line-height:1.7">PC・スマホ間でデータをリアルタイム同期します</div>
       <div style="display:flex;gap:8px;margin-bottom:10px">
         <button onclick="fbUpload()" class="btn-primary" style="margin:0;flex:1;font-size:14px">☁️ アップロード</button>
         <button onclick="fbDownload()" class="btn-ghost" style="margin:0;flex:1;font-size:14px">📥 ダウンロード</button>
@@ -786,7 +800,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 
     <div class="section-title">📋 週次振り返りレポート</div>
     <div class="card" style="margin-bottom:14px">
-      <div style="font-size:12px;color:var(--text-sub);margin-bottom:10px">今週の学習活動を自動まとめ。就活のガクチカにも使えます</div>
+      <div style="font-size:12px;color:var(--text-sub);margin-bottom:10px">今週の学習活動を自動まとめ</div>
       <button onclick="generateWeeklyReport()" class="btn-ghost" style="margin:0">📄 今週のレポートを生成</button>
       <div id="weeklyReportOut" style="display:none;margin-top:12px;padding:12px;background:var(--surface2);border-radius:10px;font-size:12px;line-height:1.8;white-space:pre-wrap"></div>
       <button id="weeklyReportCopy" onclick="copyWeeklyReport()" style="display:none" class="btn-ghost">📋 コピー</button>
@@ -806,32 +820,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 
 <button class="fab" onclick="openAddModal()">＋</button>
 </div><!-- /app -->
-
-<!-- POMODORO OVERLAY -->
-<div class="pomo-wrap" id="pomoWrap">
-  <div class="pomo-box">
-    <button class="pomo-close" onclick="stopPomo()">✕</button>
-    <div class="pomo-label" id="pomoPhaseLabel">集中タイム</div>
-    <div class="pomo-task" id="pomoTaskName"></div>
-    <div class="pomo-ring">
-      <svg class="pomo-svg" width="180" height="180" viewBox="0 0 180 180">
-        <circle cx="90" cy="90" r="80" fill="none" stroke="var(--surface2)" stroke-width="10"/>
-        <circle id="pomoCircle" cx="90" cy="90" r="80" fill="none" stroke="var(--accent)" stroke-width="10"
-          stroke-linecap="round" stroke-dasharray="503" stroke-dashoffset="0"/>
-      </svg>
-      <div class="pomo-time">
-        <div class="pomo-min" id="pomoMin">25</div>
-        <div class="pomo-sec" id="pomoSec">:00</div>
-      </div>
-    </div>
-    <div class="pomo-phase" id="pomoPhase">🍅 ポモドーロ 1/4</div>
-    <div class="pomo-btns">
-      <button class="pomo-btn pomo-start" id="pomoStartBtn" onclick="togglePomo()">▶ スタート</button>
-      <button class="pomo-btn pomo-skip" onclick="skipPomo()">スキップ</button>
-    </div>
-    <div class="pomo-count" id="pomoCount">完了: 0 ポモドーロ</div>
-  </div>
-</div>
 
 <!-- ADD MODAL -->
 <div class="modal-overlay" id="addModal" onclick="closeIfBg(event,'addModal')">
@@ -904,18 +892,20 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
     <div class="form-group">
       <label class="form-label">計画タイプ</label>
       <div class="pill-select" id="planTypePills">
-        <button class="pill selected" onclick="selectPill('planTypePills',this,'strict');toggleSF()">⏱ 厳密</button>
-        <button class="pill" onclick="selectPill('planTypePills',this,'rough');toggleSF()">🌊 大まか</button>
+        <button class="pill selected" onclick="selectPill('planTypePills',this,'strict');toggleSF()">⏱ 厳密（時間指定）</button>
+        <button class="pill" onclick="selectPill('planTypePills',this,'rough');toggleSF()">🌊 大まか（終日）</button>
       </div>
     </div>
+    <!-- 日付は常に表示 -->
+    <div class="form-group">
+      <label class="form-label">予定日</label>
+      <input class="form-input" type="date" id="taskDate" />
+    </div>
+    <!-- 厳密タイプのみ：時刻・所要時間 -->
     <div id="strictFields">
       <div class="form-row">
-        <div class="form-group"><label class="form-label">予定日</label><input class="form-input" type="date" id="taskDate" /></div>
         <div class="form-group"><label class="form-label">開始時刻</label><input class="form-input" type="time" id="taskTime" value="09:00" /></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">予定時間（分）</label>
-        <input class="form-input" type="number" id="taskDuration" value="60" min="5" step="5" />
+        <div class="form-group"><label class="form-label">所要時間（分）</label><input class="form-input" type="number" id="taskDuration" value="60" min="5" step="5" /></div>
       </div>
     </div>
     <div class="form-group">
@@ -1089,7 +1079,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   setInterval(()=>{renderHomeAssignments();renderSummary();renderTodayUnified();renderAssignList();},60000);
   loadReview();
   setTimeout(checkCarryOver, 1200);
-  setTimeout(()=>{ loadGistConfig(); updateUndoUI(); }, 600);
+  setTimeout(()=>{ loadGistConfig(); updateUndoUI(); loadNotifSettings(); }, 600);
 });
 
 function initDates(){
@@ -1786,18 +1776,39 @@ function saveReview(){
 // ===== SUBJECTS =====
 function renderSubjectList(){
   const el=document.getElementById('subjectList');
-  el.innerHTML=S.subjects.length
-    ?S.subjects.map((s,i)=>`<div class="subject-item"><span style="font-size:14px">${esc(s)}</span><button class="del-btn" onclick="deleteSubject(${i})">✕</button></div>`).join('')
-    :'<div style="font-size:13px;color:var(--text-sub);padding:8px 0">科目がまだありません</div>';
+  if(!S.subjects.length){
+    el.innerHTML='<div style="font-size:13px;color:var(--text-sub);padding:8px 0">科目がまだありません</div>';
+    return;
+  }
+  el.innerHTML=S.subjects.map((s,i)=>`
+    <div class="subject-item" id="subItem${i}">
+      <span style="font-size:14px;flex:1" id="subLabel${i}">${esc(s)}</span>
+      <div style="display:flex;gap:4px">
+        <button onclick="editSubject(${i})" style="background:none;border:none;color:var(--accent2);cursor:pointer;font-size:14px;padding:2px 6px">✏️</button>
+        <button class="del-btn" onclick="deleteSubject(${i})">✕</button>
+      </div>
+    </div>`).join('');
 }
 function addSubject(){
-  const v=document.getElementById('newSubjectInput').value.trim();
-  if(!v||S.subjects.includes(v))return;
+  const inp=document.getElementById('newSubjectInput');
+  const v=inp.value.trim();
+  if(!v)return;
+  if(S.subjects.includes(v)){showToast('既に登録されています','err',2000);return;}
   S.subjects.push(v);
-  document.getElementById('newSubjectInput').value='';
+  inp.value='';
+  saveS();renderSubjectList();updateSubjectDropdowns();
+  showToast('✅ 科目を追加しました','ok',1500);
+}
+function editSubject(i){
+  const newName=prompt('科目名を編集',S.subjects[i]);
+  if(!newName||!newName.trim())return;
+  S.subjects[i]=newName.trim();
   saveS();renderSubjectList();updateSubjectDropdowns();
 }
-function deleteSubject(i){S.subjects.splice(i,1);saveS();renderSubjectList();updateSubjectDropdowns();}
+function deleteSubject(i){
+  S.subjects.splice(i,1);
+  saveS();renderSubjectList();updateSubjectDropdowns();
+}
 function updateSubjectDropdowns(){
   const opts='<option value="">リストから</option>'+S.subjects.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
   ['assignSubjectPick','taskSubjectPick','editSubjectPick'].forEach(id=>{document.getElementById(id).innerHTML=opts;});
@@ -1873,7 +1884,10 @@ function openTaskModal(idx=-1){
   toggleSF();toggleRepeatFields();document.getElementById('taskModal').classList.add('open');
 }
 function openTaskModalDate(key){closeModal('addModal');editTIdx=-1;document.getElementById('taskModalTitle').textContent='タスクを追加';document.getElementById('taskName').value='';document.getElementById('taskDate').value=key;document.getElementById('taskTime').value='09:00';document.getElementById('taskDuration').value=60;document.getElementById('taskSubject').value='';selectPillVal('planTypePills','strict');toggleSF();document.getElementById('taskModal').classList.add('open');}
-function toggleSF(){const t=getSelectedPill('planTypePills');document.getElementById('strictFields').style.display=t==='strict'?'':'none';}
+function toggleSF(){
+  const t=getSelectedPill('planTypePills');
+  document.getElementById('strictFields').style.display=t==='strict'?'':'none';
+}
 function toggleRepeatFields(){
   const r=getSelectedPill('repeatPills');
   document.getElementById('repeatWeekFields').style.display=(r==='weekly'||r==='biweekly')?'':'none';
@@ -2420,48 +2434,91 @@ let swReg = null;
 // ===========================
 //  通知: 許可リクエスト＆スケジューラー
 // ===========================
-async function requestNotifPermission(){
-  if(!('Notification' in window)){
-    showToast('このブラウザは通知に対応していません','err');return;
+// ===========================
+//  通知：改善版
+// ===========================
+function saveNotifSettings(){
+  const hours=document.getElementById('notifHours')?.value||'24';
+  localStorage.setItem('studyos_notif_hours',hours);
+}
+function loadNotifSettings(){
+  const hours=localStorage.getItem('studyos_notif_hours')||'24';
+  const sel=document.getElementById('notifHours');
+  if(sel)sel.value=hours;
+  const morning=localStorage.getItem('studyos_morning_notif')==='1';
+  const toggle=document.getElementById('morningNotifToggle');
+  if(toggle)toggle.classList.toggle('on',morning);
+  // 通知許可状態を表示
+  if('Notification' in window){
+    const st=document.getElementById('notifStatus');
+    const btn=document.getElementById('notifBtn');
+    if(st){
+      if(Notification.permission==='granted'){
+        st.textContent='✅ 通知が許可されています';
+        if(btn){btn.style.background='rgba(76,219,138,.2)';btn.style.color='var(--success)';btn.textContent='✓';}
+      } else if(Notification.permission==='denied'){
+        st.textContent='❌ 通知が拒否されています（設定から変更）';
+      } else {
+        st.textContent='タップして通知を許可する';
+      }
+    }
   }
-  const perm = await Notification.requestPermission();
-  if(perm === 'granted'){
-    showToast('🔔 通知を許可しました！締切前にお知らせします','ok',3000);
-    S.notifEnabled = true;
-    saveS();
-    scheduleDeadlineNotifs();
+}
+function toggleMorningNotif(){
+  const toggle=document.getElementById('morningNotifToggle');
+  const cur=localStorage.getItem('studyos_morning_notif')==='1';
+  localStorage.setItem('studyos_morning_notif',cur?'0':'1');
+  if(toggle)toggle.classList.toggle('on',!cur);
+  showToast(!cur?'🌅 朝の通知をオンにしました':'朝の通知をオフにしました','ok',2000);
+}
+
+async function requestNotifPermission(){
+  if(!('Notification' in window)){showToast('このブラウザは通知に対応していません','err');return;}
+  const perm=await Notification.requestPermission();
+  if(perm==='granted'){
+    showToast('🔔 通知を許可しました！','ok',2500);
+    S.notifEnabled=true; saveS();
+    loadNotifSettings();
+    scheduleAllNotifs();
   } else {
-    showToast('通知が拒否されました。設定から変更できます','err',3000);
+    showToast('通知が拒否されました。設定アプリから変更してください','err',3000);
   }
 }
 
-function scheduleDeadlineNotifs(){
-  if(!S.notifEnabled) return;
-  if(!swReg) return;
-  const now = new Date();
+function scheduleAllNotifs(){
+  if(!swReg||Notification.permission!=='granted')return;
+  const hours=parseInt(localStorage.getItem('studyos_notif_hours')||'24');
+  const now=new Date();
+  let count=0;
   S.assignments.filter(a=>!a.done).forEach(a=>{
-    const dl = new Date(`${a.date}T${a.time||'23:00'}:00`);
-    // 24時間前通知
-    const notif24 = dl - now - 24*3600*1000;
-    if(notif24 > 0 && notif24 < 86400000){
-      swReg.active && swReg.active.postMessage({
+    const dl=new Date(`${a.date}T${a.time||'23:00'}:00`);
+    const notifTime=dl-now-(hours*3600*1000);
+    if(notifTime>0&&notifTime<86400000*7){
+      swReg.active&&swReg.active.postMessage({
         type:'SCHEDULE_NOTIFICATION',
-        title:`⏰ 明日締切: ${a.name}`,
-        body:`${a.subject||'課題'} — ${a.date} ${a.time||''}`,
-        delay: notif24
+        title:`⏰ ${hours}時間後に締切: ${a.name}`,
+        body:`${a.subject||''}  ${a.date} ${a.time||''}`,
+        delay:notifTime
       });
-    }
-    // 1時間前通知
-    const notif1 = dl - now - 3600*1000;
-    if(notif1 > 0 && notif1 < 86400000){
-      swReg.active && swReg.active.postMessage({
-        type:'SCHEDULE_NOTIFICATION',
-        title:`🚨 1時間後に締切: ${a.name}`,
-        body:`今すぐ確認してください！`,
-        delay: notif1
-      });
+      count++;
     }
   });
+  // 朝の通知（毎日8時）
+  if(localStorage.getItem('studyos_morning_notif')==='1'){
+    const tomorrow=new Date(now); tomorrow.setDate(tomorrow.getDate()+1); tomorrow.setHours(8,0,0,0);
+    const delay=tomorrow-now;
+    const todayTasks=S.tasks.filter(t=>!t.done&&t.date===fmtDate(tomorrow));
+    if(todayTasks.length>0){
+      swReg.active&&swReg.active.postMessage({
+        type:'SCHEDULE_NOTIFICATION',
+        title:'🌅 今日のタスク',
+        body:`${todayTasks.length}件のタスクがあります: ${todayTasks.slice(0,2).map(t=>t.name).join('、')}`,
+        delay
+      });
+    }
+  }
+  if(count>0)showToast(`🔔 ${count}件の通知をスケジュールしました`,'ok',2500);
+  else showToast('スケジュールできる通知がありません','err',2000);
 }
 
 // インアプリ通知バナー（アプリが開いている時）
