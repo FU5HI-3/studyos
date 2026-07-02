@@ -1,0 +1,27 @@
+name: StudyOS 通知送信
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # 毎時間実行
+  workflow_dispatch:        # 手動実行も可能
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: web-push インストール
+        run: npm install web-push
+
+      - name: 通知スクリプト実行
+        run: node notify.js
+        env:
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
