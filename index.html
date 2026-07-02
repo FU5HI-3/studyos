@@ -2416,20 +2416,60 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 // ===========================
 //  PWA: SERVICE WORKER 登録
 // ===========================
+const VAPID_PUBLIC_KEY = 'BJC1K7E_0-bjHc-WKxk8BriQlFQYHsFer5pPSwhg90k6qOrxPy7V6i3-Vtp3gZRPC0RbXV7enya4wsj4yf1iEIo';
+
 if('serviceWorker' in navigator){
   window.addEventListener('load', async ()=>{
     try{
       const reg = await navigator.serviceWorker.register('./sw.js');
-      console.log('SW registered:', reg.scope);
       swReg = reg;
-      // アプリ起動時に締切通知をスケジュール
-      scheduleDeadlineNotifs();
-    } catch(e){
-      console.log('SW registration failed:', e);
-    }
+      console.log('SW registered');
+    } catch(e){ console.log('SW failed:', e); }
   });
 }
 let swReg = null;
+
+// VAPID公開鍵をUint8Arrayに変換
+function urlBase64ToUint8Array(base64String){
+  const padding='='.repeat((4-base64String.length%4)%4);
+  const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const rawData=window.atob(base64);
+  return new Uint8Array([...rawData].map(c=>c.charCodeAt(0)));
+}
+
+// プッシュ通知購読
+async function subscribePush(){
+  if(!swReg||Notification.permission!=='granted') return null;
+  try{
+    let sub = await swReg.pushManager.getSubscription();
+    if(!sub){
+      sub = await swReg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+    // Firebase に購読情報を保存
+    await fetch('https://studyos-9fd73-default-rtdb.asia-southeast1.firebasedatabase.app/studyos-data/pushSubscription.json', {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(sub.toJSON())
+    });
+    // 通知設定もFirebaseに保存
+    await fetch('https://studyos-9fd73-default-rtdb.asia-southeast1.firebasedatabase.app/studyos-data/notifHours.json', {
+      method:'PUT',
+      body: JSON.stringify(parseInt(localStorage.getItem('studyos_notif_hours')||'24'))
+    });
+    await fetch('https://studyos-9fd73-default-rtdb.asia-southeast1.firebasedatabase.app/studyos-data/morningNotif.json', {
+      method:'PUT',
+      body: JSON.stringify(localStorage.getItem('studyos_morning_notif')==='1')
+    });
+    console.log('Push subscription saved to Firebase');
+    return sub;
+  } catch(e){
+    console.error('Push subscription failed:', e);
+    return null;
+  }
+}
 
 // ===========================
 //  通知: 許可リクエスト＆スケジューラー
@@ -2476,10 +2516,14 @@ async function requestNotifPermission(){
   if(!('Notification' in window)){showToast('このブラウザは通知に対応していません','err');return;}
   const perm=await Notification.requestPermission();
   if(perm==='granted'){
-    showToast('🔔 通知を許可しました！','ok',2500);
     S.notifEnabled=true; saveS();
     loadNotifSettings();
-    scheduleAllNotifs();
+    const sub=await subscribePush();
+    if(sub){
+      showToast('🔔 通知を設定しました！GitHub Actionsが毎時間チェックします','ok',4000);
+    } else {
+      showToast('🔔 通知を許可しました','ok',2500);
+    }
   } else {
     showToast('通知が拒否されました。設定アプリから変更してください','err',3000);
   }
